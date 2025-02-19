@@ -298,29 +298,52 @@ function to_result(option, e) {
   }
 }
 
-// build/dev/javascript/gleam_stdlib/gleam/string.mjs
-function drop_start(loop$string, loop$num_graphemes) {
-  while (true) {
-    let string5 = loop$string;
-    let num_graphemes = loop$num_graphemes;
-    let $ = num_graphemes > 0;
-    if (!$) {
-      return string5;
-    } else {
-      let $1 = pop_grapheme(string5);
-      if ($1.isOk()) {
-        let string$1 = $1[0][1];
-        loop$string = string$1;
-        loop$num_graphemes = num_graphemes - 1;
-      } else {
-        return string5;
-      }
-    }
+// build/dev/javascript/gleam_stdlib/gleam/result.mjs
+function map(result, fun) {
+  if (result.isOk()) {
+    let x = result[0];
+    return new Ok(fun(x));
+  } else {
+    let e = result[0];
+    return new Error(e);
   }
 }
-function inspect2(term) {
-  let _pipe = inspect(term);
-  return identity(_pipe);
+function map_error(result, fun) {
+  if (result.isOk()) {
+    let x = result[0];
+    return new Ok(x);
+  } else {
+    let error = result[0];
+    return new Error(fun(error));
+  }
+}
+function try$(result, fun) {
+  if (result.isOk()) {
+    let x = result[0];
+    return fun(x);
+  } else {
+    let e = result[0];
+    return new Error(e);
+  }
+}
+function then$(result, fun) {
+  return try$(result, fun);
+}
+function unwrap(result, default$) {
+  if (result.isOk()) {
+    let v = result[0];
+    return v;
+  } else {
+    return default$;
+  }
+}
+function replace_error(result, error) {
+  if (result.isOk()) {
+    let x = result[0];
+    return new Ok(x);
+  } else {
+    return new Error(error);
+  }
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/dynamic.mjs
@@ -336,7 +359,7 @@ function map_errors(result, f) {
   return map_error(
     result,
     (_capture) => {
-      return map(_capture, f);
+      return map2(_capture, f);
     }
   );
 }
@@ -368,7 +391,7 @@ function push_path(error, name) {
     toList([
       decode_string,
       (x) => {
-        return map2(decode_int(x), to_string);
+        return map(decode_int(x), to_string);
       }
     ])
   );
@@ -1459,7 +1482,7 @@ function map_loop(loop$list, loop$fun, loop$acc) {
     }
   }
 }
-function map(list4, fun) {
+function map2(list4, fun) {
   return map_loop(list4, fun, toList([]));
 }
 function append_loop(loop$first, loop$second) {
@@ -1476,7 +1499,7 @@ function append_loop(loop$first, loop$second) {
     }
   }
 }
-function append3(first2, second) {
+function append2(first2, second) {
   return append_loop(reverse(first2), second);
 }
 function fold(loop$list, loop$initial, loop$fun) {
@@ -1517,52 +1540,37 @@ function index_fold(list4, initial, fun) {
   return index_fold_loop(list4, initial, fun, 0);
 }
 
-// build/dev/javascript/gleam_stdlib/gleam/result.mjs
-function map2(result, fun) {
-  if (result.isOk()) {
-    let x = result[0];
-    return new Ok(fun(x));
-  } else {
-    let e = result[0];
-    return new Error(e);
+// build/dev/javascript/gleam_stdlib/gleam/string.mjs
+function drop_start(loop$string, loop$num_graphemes) {
+  while (true) {
+    let string5 = loop$string;
+    let num_graphemes = loop$num_graphemes;
+    let $ = num_graphemes > 0;
+    if (!$) {
+      return string5;
+    } else {
+      let $1 = pop_grapheme(string5);
+      if ($1.isOk()) {
+        let string$1 = $1[0][1];
+        loop$string = string$1;
+        loop$num_graphemes = num_graphemes - 1;
+      } else {
+        return string5;
+      }
+    }
   }
 }
-function map_error(result, fun) {
-  if (result.isOk()) {
-    let x = result[0];
-    return new Ok(x);
-  } else {
-    let error = result[0];
-    return new Error(fun(error));
-  }
+function inspect2(term) {
+  let _pipe = inspect(term);
+  return identity(_pipe);
 }
-function try$(result, fun) {
-  if (result.isOk()) {
-    let x = result[0];
-    return fun(x);
-  } else {
-    let e = result[0];
-    return new Error(e);
-  }
-}
-function then$(result, fun) {
-  return try$(result, fun);
-}
-function unwrap(result, default$) {
-  if (result.isOk()) {
-    let v = result[0];
-    return v;
-  } else {
-    return default$;
-  }
-}
-function replace_error(result, error) {
-  if (result.isOk()) {
-    let x = result[0];
-    return new Ok(x);
-  } else {
-    return new Error(error);
-  }
+
+// build/dev/javascript/gleam_stdlib/gleam/io.mjs
+function debug(term) {
+  let _pipe = term;
+  let _pipe$1 = inspect2(_pipe);
+  print_debug(_pipe$1);
+  return term;
 }
 
 // build/dev/javascript/gleam_stdlib/gleam_stdlib_decode_ffi.mjs
@@ -1762,7 +1770,7 @@ function push_path2(layer, path) {
       })()
     ])
   );
-  let path$1 = map(
+  let path$1 = map2(
     path,
     (key2) => {
       let key$1 = identity(key2);
@@ -1775,14 +1783,14 @@ function push_path2(layer, path) {
       }
     }
   );
-  let errors = map(
+  let errors = map2(
     layer[1],
     (error) => {
       let _record = error;
       return new DecodeError2(
         _record.expected,
         _record.found,
-        append3(path$1, error.path)
+        append2(path$1, error.path)
       );
     }
   );
@@ -1847,7 +1855,7 @@ function subfield(field_path, field_decoder, next) {
       let $1 = next(out).function(data2);
       let out$1 = $1[0];
       let errors2 = $1[1];
-      return [out$1, append3(errors1, errors2)];
+      return [out$1, append2(errors1, errors2)];
     }
   );
 }
@@ -1865,6 +1873,15 @@ function guard(requirement, consequence, alternative) {
 }
 
 // build/dev/javascript/gleam_json/gleam_json_ffi.mjs
+function json_to_string(json) {
+  return JSON.stringify(json);
+}
+function identity2(x) {
+  return x;
+}
+function array(list4) {
+  return list4.toArray();
+}
 function decode(string5) {
   try {
     const result = JSON.parse(string5);
@@ -1984,6 +2001,20 @@ function do_parse(json, decoder) {
 function parse(json, decoder) {
   return do_parse(json, decoder);
 }
+function to_string2(json) {
+  return json_to_string(json);
+}
+function string4(input2) {
+  return identity2(input2);
+}
+function preprocessed_array(from2) {
+  return array(from2);
+}
+function array2(entries, inner_type) {
+  let _pipe = entries;
+  let _pipe$1 = map2(_pipe, inner_type);
+  return preprocessed_array(_pipe$1);
+}
 
 // build/dev/javascript/lustre/lustre/effect.mjs
 var Effect = class extends CustomType {
@@ -1992,6 +2023,20 @@ var Effect = class extends CustomType {
     this.all = all;
   }
 };
+function custom(run2) {
+  return new Effect(
+    toList([
+      (actions) => {
+        return run2(actions.dispatch, actions.emit, actions.select, actions.root);
+      }
+    ])
+  );
+}
+function event(name, data2) {
+  return custom((_, emit3, _1, _2) => {
+    return emit3(name, data2);
+  });
+}
 function none() {
   return new Effect(toList([]));
 }
@@ -2460,16 +2505,16 @@ function lustreServerEventHandler(event3) {
   const el = event3.currentTarget;
   const tag = el.getAttribute(`data-lustre-on-${event3.type}`);
   const data2 = JSON.parse(el.getAttribute("data-lustre-data") || "{}");
-  const include = JSON.parse(el.getAttribute("data-lustre-include") || "[]");
+  const include2 = JSON.parse(el.getAttribute("data-lustre-include") || "[]");
   switch (event3.type) {
     case "input":
     case "change":
-      include.push("target.value");
+      include2.push("target.value");
       break;
   }
   return {
     tag,
-    data: include.reduce(
+    data: include2.reduce(
       (data3, property) => {
         const path = property.split(".");
         for (let i = 0, o = data3, e = event3; i < path.length; i++) {
@@ -2679,7 +2724,7 @@ var LustreClientApplication = class _LustreClientApplication {
     while (effects.length > 0) {
       const effect = effects.shift();
       const dispatch = (msg) => this.send(new Dispatch(msg));
-      const emit2 = (event3, data2) => this.root.dispatchEvent(
+      const emit3 = (event3, data2) => this.root.dispatchEvent(
         new CustomEvent(event3, {
           detail: data2,
           bubbles: true,
@@ -2689,7 +2734,7 @@ var LustreClientApplication = class _LustreClientApplication {
       const select = () => {
       };
       const root = this.root;
-      effect({ dispatch, emit: emit2, select, root });
+      effect({ dispatch, emit: emit3, select, root });
     }
     if (this.#queue.length > 0) {
       this.#flush(effects);
@@ -2790,7 +2835,7 @@ var LustreServerApplication = class _LustreServerApplication {
     while (effects.length > 0) {
       const effect = effects.shift();
       const dispatch = (msg) => this.send(new Dispatch(msg));
-      const emit2 = (event3, data2) => this.root.dispatchEvent(
+      const emit3 = (event3, data2) => this.root.dispatchEvent(
         new CustomEvent(event3, {
           detail: data2,
           bubbles: true,
@@ -2800,7 +2845,7 @@ var LustreServerApplication = class _LustreServerApplication {
       const select = () => {
       };
       const root = null;
-      effect({ dispatch, emit: emit2, select, root });
+      effect({ dispatch, emit: emit3, select, root });
     }
     if (this.#queue.length > 0) {
       this.#flush(effects);
@@ -2855,14 +2900,6 @@ function innerText(element2) {
   return element2.innerText;
 }
 
-// build/dev/javascript/gleam_stdlib/gleam/io.mjs
-function debug(term) {
-  let _pipe = term;
-  let _pipe$1 = inspect2(_pipe);
-  print_debug(_pipe$1);
-  return term;
-}
-
 // build/dev/javascript/lustre/lustre/element/html.mjs
 function h1(attrs2, children2) {
   return element("h1", attrs2, children2);
@@ -2884,6 +2921,9 @@ function input(attrs2) {
 }
 
 // build/dev/javascript/lustre/lustre/event.mjs
+function emit2(event3, data2) {
+  return event(event3, data2);
+}
 function on2(name, handler) {
   return on(name, handler);
 }
@@ -2903,14 +2943,21 @@ function on_input(msg) {
     "input",
     (event3) => {
       let _pipe = value3(event3);
-      return map2(_pipe, msg);
+      return map(_pipe, msg);
     }
   );
 }
 
 // build/dev/javascript/lustre/lustre/server_component.mjs
-function route(path) {
-  return attribute("route", path);
+function include(properties) {
+  let _pipe = properties;
+  let _pipe$1 = array2(_pipe, string4);
+  let _pipe$2 = to_string2(_pipe$1);
+  return ((_capture) => {
+    return attribute("data-lustre-include", _capture);
+  })(
+    _pipe$2
+  );
 }
 
 // build/dev/javascript/pong_shared/pong/shared.mjs
@@ -2956,7 +3003,7 @@ function update(model, msg) {
         "",
         model.current_pong
       ),
-      none()
+      emit2("pong", string4(model.current_pong))
     ];
   } else {
     let ping = msg[0];
@@ -3049,10 +3096,11 @@ function view(model) {
       on_ping((var0) => {
         return new ServerSentPing(var0);
       }),
-      data("pong", model.last_sent_pong)
+      data("pong", model.last_sent_pong),
+      include(toList(["target.id", "data", "detail"]))
     ]),
     toList([
-      h1(toList([]), toList([text("pong!")])),
+      h1(toList([]), toList([text("pong server!")])),
       input(
         toList([
           type_("text"),
@@ -3073,17 +3121,12 @@ function view(model) {
       ),
       ul(
         toList([]),
-        map(
+        map2(
           model.pongs,
           (pong) => {
             return li(toList([]), toList([text(pong)]));
           }
         )
-      ),
-      element(
-        "lustre-server-component",
-        toList([route("/ping-component")]),
-        toList([])
       )
     ])
   );
@@ -3093,27 +3136,31 @@ function view(model) {
 function main() {
   let $ = (() => {
     let _pipe = querySelector("#model");
-    return map2(_pipe, innerText);
+    return map(_pipe, innerText);
   })();
   if (!$.isOk()) {
     throw makeError(
       "let_assert",
       "pong_client",
-      8,
+      9,
       "main",
       "Pattern match failed, no pattern matched the value.",
       { value: $ }
     );
   }
   let encoded_model = $[0];
+  debug("Starting client");
   let flags = decode_model(encoded_model);
   let app = application(init2, update, view);
-  let $1 = start2(app, "#app", flags);
+  let $1 = (() => {
+    let _pipe = start2(app, "#app", flags);
+    return debug(_pipe);
+  })();
   if (!$1.isOk()) {
     throw makeError(
       "let_assert",
       "pong_client",
-      15,
+      18,
       "main",
       "Pattern match failed, no pattern matched the value.",
       { value: $1 }

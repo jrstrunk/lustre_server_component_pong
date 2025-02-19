@@ -41,21 +41,30 @@ fn handler(req, context) {
 }
 
 fn handle_wisp_request(req, _context) {
-  let model =
-    shared.Model(pongs: ["hello"], current_pong: "", last_sent_pong: "")
+  let model = shared.Model(pongs: ["hello"], current_pong: "")
 
   case request.path_segments(req) {
     [] ->
       html.html([], [
         html.head([], [
-          html.script([attribute.type_("module"), attribute.src("client")], ""),
           html.script(
             [attribute.type_("application/json"), attribute.id("model")],
             shared.encode_model(model),
           ),
+          html.script([attribute.type_("module"), attribute.src("client")], ""),
           lustre_server_component.script(),
         ]),
-        html.body([], [html.div([attribute.id("app")], [shared.view(model)])]),
+        html.body([], [
+          element.element(
+            "lustre-server-component",
+            [lustre_server_component.route("/ping-component")],
+            [
+              html.div([attribute.attribute("slot", "client-input")], [
+                html.div([attribute.id("app")], [shared.view(model)]),
+              ]),
+            ],
+          ),
+        ]),
       ])
       |> element.to_document_string_builder
       |> wisp.html_response(200)

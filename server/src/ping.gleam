@@ -1,8 +1,12 @@
 import gleam/dict
+import gleam/dynamic
+import gleam/dynamic/decode
 import gleam/io
 import gleam/json
 import gleam/list
+import gleam/result
 import lustre
+import lustre/attribute
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
@@ -10,17 +14,7 @@ import lustre/event
 import lustre/server_component
 
 pub fn app() -> lustre.App(Model, Model, Msg) {
-  lustre.component(
-    init,
-    update,
-    view,
-    [
-      #("data", pong_decoder),
-      #("pong", pong_decoder),
-      #("data-pong", pong_decoder),
-    ]
-      |> dict.from_list,
-  )
+  lustre.component(init, update, view, dict.new())
 }
 
 pub type Model {
@@ -46,9 +40,17 @@ pub fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
 
 pub fn view(model: Model) -> Element(Msg) {
   html.div([], [
+    html.slot([
+      attribute.name("client-input"),
+      on_pong(UserSentPong),
+      server_component.include(["detail"]),
+    ]),
     html.h1([], [element.text("ping!")]),
+    html.button([event.on_click(UserSentPong("Server Gen"))], [
+      html.text("Send pong"),
+    ]),
     html.div(
-      [on_pong(UserSentPong)],
+      [],
       list.map(model.pings, fn(ping) { html.li([], [element.text(ping)]) }),
     ),
   ])
@@ -58,33 +60,25 @@ pub fn encode_ping(ping: String) {
   json.object([#("ping", json.string(ping))])
 }
 
-pub fn pong_decoder(_) {
-  // use pong <- decode.subfield(["data", "pong"], decode.string)
-  // decode.success()
-  io.debug("decoding spong!")
-  Ok(UserSentPong("New pong data!"))
-}
-
 pub fn on_pong(msg) {
   use event <- event.on("pong")
 
-  io.debug("pong!")
   io.debug(event)
 
-  msg("New pong!") |> Ok
-  // let decoder = {
-  //   use pong <- decode.subfield(["data", "pong"], decode.string)
+  // msg("New pong!") |> Ok
+  let decoder = {
+    use pong <- decode.field("detail", decode.string)
 
-  //   decode.success(pong)
-  // }
+    decode.success(pong)
+  }
 
-  // let empty_error = [dynamic.DecodeError("", "", [])]
+  let empty_error = [dynamic.DecodeError("", "", [])]
 
-  // use pong <- result.try(
-  //   decode.run(event, decoder)
-  //   |> result.replace_error(empty_error),
-  // )
+  use pong <- result.try(
+    decode.run(event, decoder)
+    |> result.replace_error(empty_error),
+  )
 
-  // msg(pong)
-  // |> Ok
+  msg(pong)
+  |> Ok
 }

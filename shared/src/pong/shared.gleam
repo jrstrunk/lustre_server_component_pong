@@ -1,34 +1,23 @@
+import gleam/dict
 import gleam/dynamic
 import gleam/dynamic/decode
 import gleam/io
 import gleam/json
 import gleam/list
-import gleam/dict
 import gleam/result
+import lustre
 import lustre/attribute
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
-import lustre
-import lustre/server_component
 
 pub fn app() -> lustre.App(Model, Model, Msg) {
-  lustre.component(
-    init,
-    update,
-    view,
-    [
-      #("data", pong_decoder),
-      #("ping", pong_decoder),
-      #("data-ping", pong_decoder),
-    ]
-      |> dict.from_list,
-  )
+  lustre.component(init, update, view, dict.new())
 }
 
 pub type Model {
-  Model(pongs: List(String), current_pong: String, last_sent_pong: String)
+  Model(pongs: List(String), current_pong: String)
 }
 
 pub fn init(flag) -> #(Model, Effect(Msg)) {
@@ -45,12 +34,8 @@ pub fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   case msg {
     UserWrotePong(pong) -> #(Model(..model, current_pong: pong), effect.none())
     UserSentPong -> #(
-      Model(
-        pongs: [model.current_pong, ..model.pongs],
-        current_pong: "",
-        last_sent_pong: model.current_pong,
-      ),
-      effect.none(),
+      Model(pongs: [model.current_pong, ..model.pongs], current_pong: ""),
+      event.emit("pong", json.string(model.current_pong)),
     )
     ServerSentPing(ping) -> #(
       Model(..model, pongs: [ping, ..model.pongs]),
@@ -60,31 +45,23 @@ pub fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
 }
 
 pub fn view(model: Model) -> Element(Msg) {
-  html.div(
-    [on_ping(ServerSentPing), attribute.data("pong", model.last_sent_pong)],
-    [
-      html.h1([], [element.text("pong!")]),
-      html.input([
-        attribute.type_("text"),
-        attribute.id("pong-input"),
-        event.on_input(UserWrotePong),
-        on_ctrl_enter(UserSentPong),
-        attribute.value(model.current_pong),
-      ]),
-      html.button([attribute.id("pong-button"), event.on_click(UserSentPong)], [
-        element.text("Send pong"),
-      ]),
-      html.ul(
-        [],
-        list.map(model.pongs, fn(pong) { html.li([], [element.text(pong)]) }),
-      ),
-      element.element(
-        "lustre-server-component",
-        [server_component.route("/ping-component")],
-        [],
-      ),
-    ],
-  )
+  html.div([on_ping(ServerSentPing)], [
+    html.h1([], [element.text("pong!")]),
+    html.input([
+      attribute.type_("text"),
+      attribute.id("pong-input"),
+      event.on_input(UserWrotePong),
+      on_ctrl_enter(UserSentPong),
+      attribute.value(model.current_pong),
+    ]),
+    html.button([attribute.id("pong-button"), event.on_click(UserSentPong)], [
+      element.text("Send pong"),
+    ]),
+    html.ul(
+      [],
+      list.map(model.pongs, fn(pong) { html.li([], [element.text(pong)]) }),
+    ),
+  ])
 }
 
 pub fn on_ctrl_enter(msg: msg) {
@@ -119,7 +96,7 @@ pub fn decode_model(encoded_model: String) {
   let pongs =
     json.parse(encoded_model, decode.list(decode.string)) |> result.unwrap([])
 
-  Model(pongs: pongs, current_pong: "", last_sent_pong: "")
+  Model(pongs: pongs, current_pong: "")
 }
 
 pub fn on_ping(msg) {
@@ -145,12 +122,10 @@ pub fn on_ping(msg) {
   |> Ok
 }
 
-
 pub fn pong_decoder(_) {
   // use pong <- decode.subfield(["data", "pong"], decode.string)
   // decode.success()
   io.debug("decoding spong!")
   // Ok(UserSentPong("New pong data!"))
-  todo
+  // todo
 }
-

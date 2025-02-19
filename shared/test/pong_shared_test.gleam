@@ -9,7 +9,7 @@ import pong/shared
 
 pub fn encode_model_test() {
   let model =
-    shared.Model(pongs: ["hello"], current_pong: "", last_sent_pong: "")
+    shared.Model(pongs: ["hello"], current_pong: "")
   let encoded_model = shared.encode_model(model)
   let decoded_model = shared.decode_model(encoded_model)
 

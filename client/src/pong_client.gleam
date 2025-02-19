@@ -1,3 +1,4 @@
+import gleam/io
 import gleam/result
 import lustre
 import plinth/browser/document
@@ -9,10 +10,12 @@ pub fn main() {
     document.query_selector("#model")
     |> result.map(element.inner_text)
 
+  io.debug("Starting client")
+
   let flags = shared.decode_model(encoded_model)
 
   let app = lustre.application(shared.init, shared.update, shared.view)
-  let assert Ok(_) = lustre.start(app, "#app", flags)
+  let assert Ok(_) = lustre.start(app, "#app", flags) |> io.debug
 
   Nil
 }
