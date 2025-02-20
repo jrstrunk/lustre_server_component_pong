@@ -1,21 +1,29 @@
+import gleam/dict
+import gleam/dynamic
 import gleam/io
 import gleam/result
 import lustre
-import plinth/browser/document
-import plinth/browser/element
 import pong/shared
 
-pub fn main() {
-  let assert Ok(encoded_model) =
-    document.query_selector("#model")
-    |> result.map(element.inner_text)
+pub const name = "pong-client"
 
+pub fn main() {
   io.debug("Starting client")
 
-  let flags = shared.decode_model(encoded_model)
+  let app =
+    lustre.component(
+      shared.init,
+      shared.update,
+      shared.view,
+      dict.from_list([
+        #("server-pongs", fn(dy) {
+          dynamic.string(dy)
+          |> result.map(shared.ServerSentPing)
+        }),
+      ]),
+    )
 
-  let app = lustre.application(shared.init, shared.update, shared.view)
-  let assert Ok(_) = lustre.start(app, "#app", flags) |> io.debug
+  let assert Ok(Nil) = lustre.register(app, "pong-client")
 
   Nil
 }

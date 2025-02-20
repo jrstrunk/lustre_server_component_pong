@@ -93,19 +93,19 @@ var BitArray = class _BitArray {
     return this.buffer[index5];
   }
   // @internal
-  floatFromSlice(start3, end, isBigEndian) {
-    return byteArrayToFloat(this.buffer, start3, end, isBigEndian);
+  floatFromSlice(start2, end, isBigEndian) {
+    return byteArrayToFloat(this.buffer, start2, end, isBigEndian);
   }
   // @internal
-  intFromSlice(start3, end, isBigEndian, isSigned) {
-    return byteArrayToInt(this.buffer, start3, end, isBigEndian, isSigned);
+  intFromSlice(start2, end, isBigEndian, isSigned) {
+    return byteArrayToInt(this.buffer, start2, end, isBigEndian, isSigned);
   }
   // @internal
-  binaryFromSlice(start3, end) {
+  binaryFromSlice(start2, end) {
     const buffer = new Uint8Array(
       this.buffer.buffer,
-      this.buffer.byteOffset + start3,
-      end - start3
+      this.buffer.byteOffset + start2,
+      end - start2
     );
     return new _BitArray(buffer);
   }
@@ -124,16 +124,16 @@ var UtfCodepoint = class {
     this.value = value4;
   }
 };
-function byteArrayToInt(byteArray, start3, end, isBigEndian, isSigned) {
-  const byteSize = end - start3;
+function byteArrayToInt(byteArray, start2, end, isBigEndian, isSigned) {
+  const byteSize = end - start2;
   if (byteSize <= 6) {
     let value4 = 0;
     if (isBigEndian) {
-      for (let i = start3; i < end; i++) {
+      for (let i = start2; i < end; i++) {
         value4 = value4 * 256 + byteArray[i];
       }
     } else {
-      for (let i = end - 1; i >= start3; i--) {
+      for (let i = end - 1; i >= start2; i--) {
         value4 = value4 * 256 + byteArray[i];
       }
     }
@@ -147,11 +147,11 @@ function byteArrayToInt(byteArray, start3, end, isBigEndian, isSigned) {
   } else {
     let value4 = 0n;
     if (isBigEndian) {
-      for (let i = start3; i < end; i++) {
+      for (let i = start2; i < end; i++) {
         value4 = (value4 << 8n) + BigInt(byteArray[i]);
       }
     } else {
-      for (let i = end - 1; i >= start3; i--) {
+      for (let i = end - 1; i >= start2; i--) {
         value4 = (value4 << 8n) + BigInt(byteArray[i]);
       }
     }
@@ -164,13 +164,13 @@ function byteArrayToInt(byteArray, start3, end, isBigEndian, isSigned) {
     return Number(value4);
   }
 }
-function byteArrayToFloat(byteArray, start3, end, isBigEndian) {
+function byteArrayToFloat(byteArray, start2, end, isBigEndian) {
   const view2 = new DataView(byteArray.buffer);
-  const byteSize = end - start3;
+  const byteSize = end - start2;
   if (byteSize === 8) {
-    return view2.getFloat64(start3, !isBigEndian);
+    return view2.getFloat64(start2, !isBigEndian);
   } else if (byteSize === 4) {
-    return view2.getFloat32(start3, !isBigEndian);
+    return view2.getFloat32(start2, !isBigEndian);
   } else {
     const msg = `Sized floats must be 32-bit or 64-bit on JavaScript, got size of ${byteSize * 8} bits`;
     throw new globalThis.Error(msg);
@@ -298,8 +298,125 @@ function to_result(option, e) {
   }
 }
 
+// build/dev/javascript/gleam_stdlib/gleam/list.mjs
+function reverse_and_prepend(loop$prefix, loop$suffix) {
+  while (true) {
+    let prefix = loop$prefix;
+    let suffix = loop$suffix;
+    if (prefix.hasLength(0)) {
+      return suffix;
+    } else {
+      let first$1 = prefix.head;
+      let rest$1 = prefix.tail;
+      loop$prefix = rest$1;
+      loop$suffix = prepend(first$1, suffix);
+    }
+  }
+}
+function reverse(list3) {
+  return reverse_and_prepend(list3, toList([]));
+}
+function map_loop(loop$list, loop$fun, loop$acc) {
+  while (true) {
+    let list3 = loop$list;
+    let fun = loop$fun;
+    let acc = loop$acc;
+    if (list3.hasLength(0)) {
+      return reverse(acc);
+    } else {
+      let first$1 = list3.head;
+      let rest$1 = list3.tail;
+      loop$list = rest$1;
+      loop$fun = fun;
+      loop$acc = prepend(fun(first$1), acc);
+    }
+  }
+}
+function map(list3, fun) {
+  return map_loop(list3, fun, toList([]));
+}
+function append_loop(loop$first, loop$second) {
+  while (true) {
+    let first2 = loop$first;
+    let second = loop$second;
+    if (first2.hasLength(0)) {
+      return second;
+    } else {
+      let first$1 = first2.head;
+      let rest$1 = first2.tail;
+      loop$first = rest$1;
+      loop$second = prepend(first$1, second);
+    }
+  }
+}
+function append(first2, second) {
+  return append_loop(reverse(first2), second);
+}
+function fold(loop$list, loop$initial, loop$fun) {
+  while (true) {
+    let list3 = loop$list;
+    let initial = loop$initial;
+    let fun = loop$fun;
+    if (list3.hasLength(0)) {
+      return initial;
+    } else {
+      let first$1 = list3.head;
+      let rest$1 = list3.tail;
+      loop$list = rest$1;
+      loop$initial = fun(initial, first$1);
+      loop$fun = fun;
+    }
+  }
+}
+function index_fold_loop(loop$over, loop$acc, loop$with, loop$index) {
+  while (true) {
+    let over = loop$over;
+    let acc = loop$acc;
+    let with$ = loop$with;
+    let index5 = loop$index;
+    if (over.hasLength(0)) {
+      return acc;
+    } else {
+      let first$1 = over.head;
+      let rest$1 = over.tail;
+      loop$over = rest$1;
+      loop$acc = with$(acc, first$1, index5);
+      loop$with = with$;
+      loop$index = index5 + 1;
+    }
+  }
+}
+function index_fold(list3, initial, fun) {
+  return index_fold_loop(list3, initial, fun, 0);
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/string.mjs
+function drop_start(loop$string, loop$num_graphemes) {
+  while (true) {
+    let string5 = loop$string;
+    let num_graphemes = loop$num_graphemes;
+    let $ = num_graphemes > 0;
+    if (!$) {
+      return string5;
+    } else {
+      let $1 = pop_grapheme(string5);
+      if ($1.isOk()) {
+        let string$1 = $1[0][1];
+        loop$string = string$1;
+        loop$num_graphemes = num_graphemes - 1;
+      } else {
+        return string5;
+      }
+    }
+  }
+}
+function inspect2(term) {
+  let _pipe = inspect(term);
+  return identity(_pipe);
+}
+
 // build/dev/javascript/gleam_stdlib/gleam/result.mjs
-function map(result, fun) {
+function map2(result, fun) {
   if (result.isOk()) {
     let x = result[0];
     return new Ok(fun(x));
@@ -359,7 +476,7 @@ function map_errors(result, f) {
   return map_error(
     result,
     (_capture) => {
-      return map2(_capture, f);
+      return map(_capture, f);
     }
   );
 }
@@ -391,7 +508,7 @@ function push_path(error, name) {
     toList([
       decode_string,
       (x) => {
-        return map(decode_int(x), to_string);
+        return map2(decode_int(x), to_string);
       }
     ])
   );
@@ -1416,6 +1533,24 @@ function inspectUtfCodepoint(codepoint2) {
 function insert(dict2, key2, value4) {
   return map_insert(key2, value4, dict2);
 }
+function from_list_loop(loop$list, loop$initial) {
+  while (true) {
+    let list3 = loop$list;
+    let initial = loop$initial;
+    if (list3.hasLength(0)) {
+      return initial;
+    } else {
+      let key2 = list3.head[0];
+      let value4 = list3.head[1];
+      let rest = list3.tail;
+      loop$list = rest;
+      loop$initial = insert(initial, key2, value4);
+    }
+  }
+}
+function from_list(list3) {
+  return from_list_loop(list3, new_map());
+}
 function reverse_and_concat(loop$remaining, loop$accumulator) {
   while (true) {
     let remaining = loop$remaining;
@@ -1446,123 +1581,6 @@ function do_keys_loop(loop$list, loop$acc) {
 }
 function keys(dict2) {
   return do_keys_loop(map_to_list(dict2), toList([]));
-}
-
-// build/dev/javascript/gleam_stdlib/gleam/list.mjs
-function reverse_and_prepend(loop$prefix, loop$suffix) {
-  while (true) {
-    let prefix = loop$prefix;
-    let suffix = loop$suffix;
-    if (prefix.hasLength(0)) {
-      return suffix;
-    } else {
-      let first$1 = prefix.head;
-      let rest$1 = prefix.tail;
-      loop$prefix = rest$1;
-      loop$suffix = prepend(first$1, suffix);
-    }
-  }
-}
-function reverse(list3) {
-  return reverse_and_prepend(list3, toList([]));
-}
-function map_loop(loop$list, loop$fun, loop$acc) {
-  while (true) {
-    let list3 = loop$list;
-    let fun = loop$fun;
-    let acc = loop$acc;
-    if (list3.hasLength(0)) {
-      return reverse(acc);
-    } else {
-      let first$1 = list3.head;
-      let rest$1 = list3.tail;
-      loop$list = rest$1;
-      loop$fun = fun;
-      loop$acc = prepend(fun(first$1), acc);
-    }
-  }
-}
-function map2(list3, fun) {
-  return map_loop(list3, fun, toList([]));
-}
-function append_loop(loop$first, loop$second) {
-  while (true) {
-    let first2 = loop$first;
-    let second = loop$second;
-    if (first2.hasLength(0)) {
-      return second;
-    } else {
-      let first$1 = first2.head;
-      let rest$1 = first2.tail;
-      loop$first = rest$1;
-      loop$second = prepend(first$1, second);
-    }
-  }
-}
-function append2(first2, second) {
-  return append_loop(reverse(first2), second);
-}
-function fold(loop$list, loop$initial, loop$fun) {
-  while (true) {
-    let list3 = loop$list;
-    let initial = loop$initial;
-    let fun = loop$fun;
-    if (list3.hasLength(0)) {
-      return initial;
-    } else {
-      let first$1 = list3.head;
-      let rest$1 = list3.tail;
-      loop$list = rest$1;
-      loop$initial = fun(initial, first$1);
-      loop$fun = fun;
-    }
-  }
-}
-function index_fold_loop(loop$over, loop$acc, loop$with, loop$index) {
-  while (true) {
-    let over = loop$over;
-    let acc = loop$acc;
-    let with$ = loop$with;
-    let index5 = loop$index;
-    if (over.hasLength(0)) {
-      return acc;
-    } else {
-      let first$1 = over.head;
-      let rest$1 = over.tail;
-      loop$over = rest$1;
-      loop$acc = with$(acc, first$1, index5);
-      loop$with = with$;
-      loop$index = index5 + 1;
-    }
-  }
-}
-function index_fold(list3, initial, fun) {
-  return index_fold_loop(list3, initial, fun, 0);
-}
-
-// build/dev/javascript/gleam_stdlib/gleam/string.mjs
-function drop_start(loop$string, loop$num_graphemes) {
-  while (true) {
-    let string5 = loop$string;
-    let num_graphemes = loop$num_graphemes;
-    let $ = num_graphemes > 0;
-    if (!$) {
-      return string5;
-    } else {
-      let $1 = pop_grapheme(string5);
-      if ($1.isOk()) {
-        let string$1 = $1[0][1];
-        loop$string = string$1;
-        loop$num_graphemes = num_graphemes - 1;
-      } else {
-        return string5;
-      }
-    }
-  }
-}
-function inspect2(term) {
-  let _pipe = inspect(term);
-  return identity(_pipe);
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/io.mjs
@@ -1770,7 +1788,7 @@ function push_path2(layer, path) {
       })()
     ])
   );
-  let path$1 = map2(
+  let path$1 = map(
     path,
     (key2) => {
       let key$1 = identity(key2);
@@ -1783,14 +1801,14 @@ function push_path2(layer, path) {
       }
     }
   );
-  let errors = map2(
+  let errors = map(
     layer[1],
     (error) => {
       let _record = error;
       return new DecodeError2(
         _record.expected,
         _record.found,
-        append2(path$1, error.path)
+        append(path$1, error.path)
       );
     }
   );
@@ -1855,21 +1873,12 @@ function subfield(field_path, field_decoder, next) {
       let $1 = next(out).function(data);
       let out$1 = $1[0];
       let errors2 = $1[1];
-      return [out$1, append2(errors1, errors2)];
+      return [out$1, append(errors1, errors2)];
     }
   );
 }
 function field2(field_name, field_decoder, next) {
   return subfield(toList([field_name]), field_decoder, next);
-}
-
-// build/dev/javascript/gleam_stdlib/gleam/bool.mjs
-function guard(requirement, consequence, alternative) {
-  if (requirement) {
-    return consequence;
-  } else {
-    return alternative();
-  }
 }
 
 // build/dev/javascript/gleam_json/gleam_json_ffi.mjs
@@ -2743,6 +2752,236 @@ var LustreClientApplication = class _LustreClientApplication {
   }
 };
 var start = LustreClientApplication.start;
+var make_lustre_client_component = ({ init: init3, update: update2, view: view2, on_attribute_change }, name) => {
+  if (!is_browser())
+    return new Error(new NotABrowser());
+  if (!name.includes("-"))
+    return new Error(new BadComponentName(name));
+  if (window.customElements.get(name)) {
+    return new Error(new ComponentAlreadyRegistered(name));
+  }
+  const [model, effects] = init3(void 0);
+  const hasAttributes = on_attribute_change instanceof Some;
+  const component2 = class LustreClientComponent extends HTMLElement {
+    /**
+     * @returns {string[]}
+     */
+    static get observedAttributes() {
+      if (hasAttributes) {
+        return on_attribute_change[0].entries().map(([name2]) => name2);
+      } else {
+        return [];
+      }
+    }
+    /**
+     * @returns {LustreClientComponent}
+     */
+    constructor() {
+      super();
+      this.attachShadow({ mode: "open" });
+      this.internals = this.attachInternals();
+      if (hasAttributes) {
+        on_attribute_change[0].forEach((decoder, name2) => {
+          const key2 = `__mirrored__${name2}`;
+          Object.defineProperty(this, name2, {
+            get() {
+              return this[key2];
+            },
+            set(value4) {
+              const prev = this[key2];
+              if (this.#connected && isEqual(prev, value4))
+                return;
+              this[key2] = value4;
+              const decoded = decoder(value4);
+              if (decoded instanceof Error)
+                return;
+              this.#queue.push(decoded[0]);
+              if (this.#connected && !this.#tickScheduled) {
+                this.#tickScheduled = window.requestAnimationFrame(
+                  () => this.#tick()
+                );
+              }
+            }
+          });
+        });
+      }
+    }
+    /**
+     *
+     */
+    connectedCallback() {
+      this.#adoptStyleSheets().finally(() => {
+        this.#tick(effects.all.toArray(), true);
+        this.#connected = true;
+      });
+    }
+    /**
+     * @param {string} key
+     * @param {string} prev
+     * @param {string} next
+     */
+    attributeChangedCallback(key2, prev, next) {
+      if (prev !== next)
+        this[key2] = next;
+    }
+    /**
+     *
+     */
+    disconnectedCallback() {
+      this.#model = null;
+      this.#queue = [];
+      this.#tickScheduled = window.cancelAnimationFrame(this.#tickScheduled);
+      this.#connected = false;
+    }
+    /**
+     * @param {Lustre.Action<Msg, Lustre.ClientSpa>} action
+     */
+    send(action) {
+      if (action instanceof Debug) {
+        if (action[0] instanceof ForceModel) {
+          this.#tickScheduled = window.cancelAnimationFrame(
+            this.#tickScheduled
+          );
+          this.#queue = [];
+          this.#model = action[0][0];
+          const vdom = view2(this.#model);
+          const dispatch = (handler, immediate = false) => (event2) => {
+            const result = handler(event2);
+            if (result instanceof Ok) {
+              this.send(new Dispatch(result[0], immediate));
+            }
+          };
+          const prev = this.shadowRoot.childNodes[this.#adoptedStyleElements.length] ?? this.shadowRoot.appendChild(document.createTextNode(""));
+          morph(prev, vdom, dispatch);
+        }
+      } else if (action instanceof Dispatch) {
+        const msg = action[0];
+        const immediate = action[1] ?? false;
+        this.#queue.push(msg);
+        if (immediate) {
+          this.#tickScheduled = window.cancelAnimationFrame(
+            this.#tickScheduled
+          );
+          this.#tick();
+        } else if (!this.#tickScheduled) {
+          this.#tickScheduled = window.requestAnimationFrame(
+            () => this.#tick()
+          );
+        }
+      } else if (action instanceof Emit2) {
+        const event2 = action[0];
+        const data = action[1];
+        this.dispatchEvent(
+          new CustomEvent(event2, {
+            detail: data,
+            bubbles: true,
+            composed: true
+          })
+        );
+      }
+    }
+    /** @type {Element[]} */
+    #adoptedStyleElements = [];
+    /** @type {Model} */
+    #model = model;
+    /** @type {Array<Msg>} */
+    #queue = [];
+    /** @type {number | undefined} */
+    #tickScheduled;
+    /** @type {boolean} */
+    #connected = true;
+    #tick(effects2 = []) {
+      if (!this.#connected)
+        return;
+      this.#tickScheduled = void 0;
+      this.#flush(effects2);
+      const vdom = view2(this.#model);
+      const dispatch = (handler, immediate = false) => (event2) => {
+        const result = handler(event2);
+        if (result instanceof Ok) {
+          this.send(new Dispatch(result[0], immediate));
+        }
+      };
+      const prev = this.shadowRoot.childNodes[this.#adoptedStyleElements.length] ?? this.shadowRoot.appendChild(document.createTextNode(""));
+      morph(prev, vdom, dispatch);
+    }
+    #flush(effects2 = []) {
+      while (this.#queue.length > 0) {
+        const msg = this.#queue.shift();
+        const [next, effect] = update2(this.#model, msg);
+        effects2 = effects2.concat(effect.all.toArray());
+        this.#model = next;
+      }
+      while (effects2.length > 0) {
+        const effect = effects2.shift();
+        const dispatch = (msg) => this.send(new Dispatch(msg));
+        const emit3 = (event2, data) => this.dispatchEvent(
+          new CustomEvent(event2, {
+            detail: data,
+            bubbles: true,
+            composed: true
+          })
+        );
+        const select = () => {
+        };
+        const root = this.shadowRoot;
+        effect({ dispatch, emit: emit3, select, root });
+      }
+      if (this.#queue.length > 0) {
+        this.#flush(effects2);
+      }
+    }
+    async #adoptStyleSheets() {
+      const pendingParentStylesheets = [];
+      for (const link of document.querySelectorAll("link[rel=stylesheet]")) {
+        if (link.sheet)
+          continue;
+        pendingParentStylesheets.push(
+          new Promise((resolve2, reject) => {
+            link.addEventListener("load", resolve2);
+            link.addEventListener("error", reject);
+          })
+        );
+      }
+      await Promise.allSettled(pendingParentStylesheets);
+      while (this.#adoptedStyleElements.length) {
+        this.#adoptedStyleElements.shift().remove();
+        this.shadowRoot.firstChild.remove();
+      }
+      this.shadowRoot.adoptedStyleSheets = this.getRootNode().adoptedStyleSheets;
+      const pending = [];
+      for (const sheet of document.styleSheets) {
+        try {
+          this.shadowRoot.adoptedStyleSheets.push(sheet);
+        } catch {
+          try {
+            const adoptedSheet = new CSSStyleSheet();
+            for (const rule of sheet.cssRules) {
+              adoptedSheet.insertRule(
+                rule.cssText,
+                adoptedSheet.cssRules.length
+              );
+            }
+            this.shadowRoot.adoptedStyleSheets.push(adoptedSheet);
+          } catch {
+            const node = sheet.ownerNode.cloneNode();
+            this.shadowRoot.prepend(node);
+            this.#adoptedStyleElements.push(node);
+            pending.push(
+              new Promise((resolve2, reject) => {
+                node.onload = resolve2;
+                node.onerror = reject;
+              })
+            );
+          }
+        }
+      }
+      return Promise.allSettled(pending);
+    }
+  };
+  window.customElements.define(name, component2);
+  return new Ok(void 0);
+};
 var LustreServerApplication = class _LustreServerApplication {
   static start({ init: init3, update: update2, view: view2, on_attribute_change }, flags) {
     const app = new _LustreServerApplication(
@@ -2866,6 +3105,18 @@ var App = class extends CustomType {
     this.on_attribute_change = on_attribute_change;
   }
 };
+var BadComponentName = class extends CustomType {
+  constructor(name) {
+    super();
+    this.name = name;
+  }
+};
+var ComponentAlreadyRegistered = class extends CustomType {
+  constructor(name) {
+    super();
+    this.name = name;
+  }
+};
 var ElementNotFound = class extends CustomType {
   constructor(selector) {
     super();
@@ -2874,17 +3125,8 @@ var ElementNotFound = class extends CustomType {
 };
 var NotABrowser = class extends CustomType {
 };
-function application(init3, update2, view2) {
-  return new App(init3, update2, view2, new None());
-}
-function start2(app, selector, flags) {
-  return guard(
-    !is_browser(),
-    new Error(new NotABrowser()),
-    () => {
-      return start(app, selector, flags);
-    }
-  );
+function component(init3, update2, view2, on_attribute_change) {
+  return new App(init3, update2, view2, new Some(on_attribute_change));
 }
 
 // build/dev/javascript/plinth/document_ffi.mjs
@@ -2941,7 +3183,7 @@ function on_input(msg) {
     "input",
     (event2) => {
       let _pipe = value3(event2);
-      return map(_pipe, msg);
+      return map2(_pipe, msg);
     }
   );
 }
@@ -2962,8 +3204,14 @@ var UserWrotePong = class extends CustomType {
 };
 var UserSentPong = class extends CustomType {
 };
-function init2(flag) {
-  return [flag, none()];
+var ServerSentPing = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
+function init2(_) {
+  return [new Model2(toList([]), ""), none()];
 }
 function update(model, msg) {
   if (msg instanceof UserWrotePong) {
@@ -3051,7 +3299,7 @@ function view(model) {
       ),
       ul(
         toList([]),
-        map2(
+        map(
           model.pongs,
           (pong) => {
             return li(toList([]), toList([text(pong)]));
@@ -3073,13 +3321,13 @@ function decode_model(encoded_model) {
 function main() {
   let $ = (() => {
     let _pipe = querySelector("#model");
-    return map(_pipe, innerText);
+    return map2(_pipe, innerText);
   })();
   if (!$.isOk()) {
     throw makeError(
       "let_assert",
       "pong_client",
-      9,
+      13,
       "main",
       "Pattern match failed, no pattern matched the value.",
       { value: $ }
@@ -3087,20 +3335,40 @@ function main() {
   }
   let encoded_model = $[0];
   debug("Starting client");
-  let flags = decode_model(encoded_model);
-  let app = application(init2, update, view);
-  let $1 = (() => {
-    let _pipe = start2(app, "#app", flags);
-    return debug(_pipe);
-  })();
-  if (!$1.isOk()) {
+  let $1 = decode_model(encoded_model);
+  let app = component(
+    init2,
+    update,
+    view,
+    (() => {
+      let _pipe = toList([
+        [
+          "server-pongs",
+          (dy) => {
+            debug("new server-pongs");
+            debug(dy);
+            let _pipe2 = string(dy);
+            return map2(
+              _pipe2,
+              (var0) => {
+                return new ServerSentPing(var0);
+              }
+            );
+          }
+        ]
+      ]);
+      return from_list(_pipe);
+    })()
+  );
+  let $2 = make_lustre_client_component(app, "pong-client");
+  if (!$2.isOk() || $2[0]) {
     throw makeError(
       "let_assert",
       "pong_client",
-      18,
+      38,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $1 }
+      { value: $2 }
     );
   }
   return void 0;

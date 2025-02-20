@@ -14,7 +14,7 @@ import wisp/wisp_mist
 
 pub fn main() {
   let assert Ok(ping_actor) =
-    lustre.start_actor(ping.app(), ping.Model(pings: []))
+    lustre.start_actor(ping.app(), ping.Model(pings: [], last_ping: ""))
 
   let assert Ok(_) =
     handler(_, ping_actor)
@@ -58,18 +58,7 @@ fn handle_wisp_request(req, _context) {
           element.element(
             "lustre-server-component",
             [lustre_server_component.route("/ping-component")],
-            [
-              html.div([attribute.attribute("slot", "client-fun")], [
-                html.text("this is a slot for fun"),
-              ]),
-              html.div(
-                [
-                  attribute.attribute("slot", "client-input"),
-                  attribute.id("app"),
-                ],
-                [shared.view(model)],
-              ),
-            ],
+            [],
           ),
         ]),
       ])

@@ -18,7 +18,7 @@ pub fn app() -> lustre.App(Model, Model, Msg) {
 }
 
 pub type Model {
-  Model(pings: List(String))
+  Model(pings: List(String), last_ping: String)
 }
 
 pub fn init(flag) -> #(Model, Effect(Msg)) {
@@ -32,7 +32,7 @@ pub type Msg {
 pub fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   case msg {
     UserSentPong(ping) -> #(
-      Model(pings: [ping, ..model.pings]),
+      Model(pings: [ping, ..model.pings], last_ping: ping),
       server_component.emit("ping", encode_ping(ping)),
     )
   }
@@ -40,14 +40,17 @@ pub fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
 
 pub fn view(model: Model) -> Element(Msg) {
   html.div([], [
-    html.slot([
-      attribute.name("client-input"),
-      on_pong(UserSentPong),
-      server_component.include(["detail"]),
-    ]),
-    html.slot([attribute.name("client-fun")]),
+    element.element(
+      "pong-client",
+      [
+        attribute.attribute("server-pongs", "Server got: " <> model.last_ping),
+        on_pong(UserSentPong),
+        server_component.include(["detail"]),
+      ],
+      [],
+    ),
     html.h1([], [element.text("ping!")]),
-    html.button([event.on_click(UserSentPong("Server Gen"))], [
+    html.button([event.on_click(UserSentPong("Server generated pong"))], [
       html.text("Send pong"),
     ]),
     html.div(
@@ -66,7 +69,6 @@ pub fn on_pong(msg) {
 
   io.debug(event)
 
-  // msg("New pong!") |> Ok
   let decoder = {
     use pong <- decode.field("detail", decode.string)
 

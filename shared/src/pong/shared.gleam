@@ -12,7 +12,7 @@ import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 
-pub fn app() -> lustre.App(Model, Model, Msg) {
+pub fn app() -> lustre.App(Nil, Model, Msg) {
   lustre.component(init, update, view, dict.new())
 }
 
@@ -20,8 +20,8 @@ pub type Model {
   Model(pongs: List(String), current_pong: String)
 }
 
-pub fn init(flag) -> #(Model, Effect(Msg)) {
-  #(flag, effect.none())
+pub fn init(_) -> #(Model, Effect(Msg)) {
+  #(Model(pongs: [], current_pong: ""), effect.none())
 }
 
 pub type Msg {
@@ -106,7 +106,7 @@ pub fn on_ping(msg) {
   io.debug(event)
 
   let decoder = {
-    use pong <- decode.subfield(["detail  ", "ping"], decode.string)
+    use pong <- decode.subfield(["detail", "ping"], decode.string)
 
     decode.success(pong)
   }
