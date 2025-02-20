@@ -45,7 +45,7 @@ pub fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
 }
 
 pub fn view(model: Model) -> Element(Msg) {
-  html.div([on_ping(ServerSentPing)], [
+  element.fragment([
     html.h1([], [element.text("pong!")]),
     html.input([
       attribute.type_("text"),

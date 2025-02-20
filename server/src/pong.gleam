@@ -59,9 +59,16 @@ fn handle_wisp_request(req, _context) {
             "lustre-server-component",
             [lustre_server_component.route("/ping-component")],
             [
-              html.div([attribute.attribute("slot", "client-input")], [
-                html.div([attribute.id("app")], [shared.view(model)]),
+              html.div([attribute.attribute("slot", "client-fun")], [
+                html.text("this is a slot for fun"),
               ]),
+              html.div(
+                [
+                  attribute.attribute("slot", "client-input"),
+                  attribute.id("app"),
+                ],
+                [shared.view(model)],
+              ),
             ],
           ),
         ]),

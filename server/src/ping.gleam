@@ -45,6 +45,7 @@ pub fn view(model: Model) -> Element(Msg) {
       on_pong(UserSentPong),
       server_component.include(["detail"]),
     ]),
+    html.slot([attribute.name("client-fun")]),
     html.h1([], [element.text("ping!")]),
     html.button([event.on_click(UserSentPong("Server Gen"))], [
       html.text("Send pong"),
