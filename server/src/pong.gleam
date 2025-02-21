@@ -7,7 +7,6 @@ import lustre/element/html
 import lustre/server_component as lustre_server_component
 import mist
 import ping
-import pong/shared
 import server_component
 import wisp
 import wisp/wisp_mist
@@ -41,16 +40,10 @@ fn handler(req, context) {
 }
 
 fn handle_wisp_request(req, _context) {
-  let model = shared.Model(pongs: ["hello"], current_pong: "")
-
   case request.path_segments(req) {
     [] ->
       html.html([], [
         html.head([], [
-          html.script(
-            [attribute.type_("application/json"), attribute.id("model")],
-            shared.encode_model(model),
-          ),
           html.script([attribute.type_("module"), attribute.src("client")], ""),
           lustre_server_component.script(),
         ]),

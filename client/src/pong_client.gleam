@@ -1,9 +1,9 @@
+import client_pong
 import gleam/dict
 import gleam/dynamic
 import gleam/io
 import gleam/result
 import lustre
-import pong/shared
 
 pub const name = "pong-client"
 
@@ -12,13 +12,13 @@ pub fn main() {
 
   let app =
     lustre.component(
-      shared.init,
-      shared.update,
-      shared.view,
+      client_pong.init,
+      client_pong.update,
+      client_pong.view,
       dict.from_list([
         #("server-pongs", fn(dy) {
           dynamic.string(dy)
-          |> result.map(shared.ServerSentPing)
+          |> result.map(client_pong.ServerSentPing)
         }),
       ]),
     )

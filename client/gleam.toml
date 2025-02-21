@@ -20,6 +20,7 @@ gleam_http = ">= 3.7.2 and < 4.0.0"
 gleam_json = ">= 2.3.0 and < 3.0.0"
 plinth = ">= 0.5.8 and < 1.0.0"
 pong_shared = { path = "../shared" }
+pong = { path = "../server" }
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
